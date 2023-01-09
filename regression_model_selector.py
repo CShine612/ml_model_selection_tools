@@ -10,69 +10,102 @@ from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 
 DATA = "Regression_Data.csv"
-RANDOM = random.randint(1, 100)
+N_TESTS = 5
 
 dataframe = pd.read_csv(DATA)
 X = dataframe.iloc[:, :-1].values
 y = dataframe.iloc[:, -1].values
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=RANDOM)
 
-model_fits = {}
+# Linear Regression
+def linear_regression_accuracy(X, y, random_state=random.randint(1, 100)):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_state)
 
-#Linear Regression
-linear_regressor = LinearRegression()
-linear_regressor.fit(X_train, y_train)
+    linear_regressor = LinearRegression()
+    linear_regressor.fit(X_train, y_train)
 
-linear_regression_y_pred = linear_regressor.predict(X_test)
+    linear_regression_y_pred = linear_regressor.predict(X_test)
 
-model_fits["Linear Regression"] = r2_score(y_test, linear_regression_y_pred)
+    return r2_score(y_test, linear_regression_y_pred)
 
-#Polynomial Regression
-poly_reg = PolynomialFeatures(degree=4)
-X_poly = poly_reg.fit_transform(X_train)
-poly_regressor = LinearRegression()
-poly_regressor.fit(X_poly, y_train)
 
-poly_y_pred = poly_regressor.predict(poly_reg.transform((X_test)))
+# Polynomial Regression
+def polynomial_regression_accuracy(X, y, random_state=random.randint(1, 100)):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_state)
 
-model_fits["Polynomial Regression"] = r2_score(y_test, poly_y_pred)
+    poly_reg = PolynomialFeatures(degree=4)
+    X_poly = poly_reg.fit_transform(X_train)
+    poly_regressor = LinearRegression()
+    poly_regressor.fit(X_poly, y_train)
 
-#Decision Tree Regression
-dt_regressor = DecisionTreeRegressor()
-dt_regressor.fit(X_train, y_train)
+    poly_y_pred = poly_regressor.predict(poly_reg.transform((X_test)))
 
-decision_tree_y_pred = dt_regressor.predict(X_test)
+    return r2_score(y_test, poly_y_pred)
 
-model_fits["Decision Tree Regression"] = r2_score(y_test, decision_tree_y_pred)
 
-#Random Forest Regression
-rf_regressor = RandomForestRegressor()
-rf_regressor.fit(X_train, y_train)
+# Decision Tree Regression
+def decision_tree_regression_accuracy(X, y, random_state=random.randint(1, 100)):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_state)
 
-rf_y_pred = rf_regressor.predict(X_test)
+    dt_regressor = DecisionTreeRegressor()
+    dt_regressor.fit(X_train, y_train)
 
-model_fits["Random Forest Regression"] = r2_score(y_test, rf_y_pred)
+    decision_tree_y_pred = dt_regressor.predict(X_test)
 
-#Support Vector Regression
-y_reshaped = y.reshape(len(y), 1)
-X_train, X_test, y_train, y_test = train_test_split(X, y_reshaped, test_size=0.2, random_state=RANDOM)
+    return r2_score(y_test, decision_tree_y_pred)
 
-sc_X = StandardScaler()
-sc_y = StandardScaler()
-X_train = sc_X.fit_transform(X_train)
-y_train = sc_y.fit_transform(y_train)
 
-svr_regressor = SVR(kernel="rbf")
-svr_regressor.fit(X_train, y_train)
+# Random Forest Regression
+def random_forest_regression_accuracy(X, y, random_state=random.randint(1, 100)):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_state)
 
-y_pred = sc_y.inverse_transform(svr_regressor.predict(sc_X.transform(X_test)).reshape(-1,1))
+    rf_regressor = RandomForestRegressor()
+    rf_regressor.fit(X_train, y_train)
 
-model_fits["Support Vector Regression"] = r2_score(y_test, y_pred)
+    rf_y_pred = rf_regressor.predict(X_test)
 
-model_fits = dict(sorted(model_fits.items(), key=lambda item: item[1], reverse=True))
+    return r2_score(y_test, rf_y_pred)
 
-i = 1
-for fit in model_fits.items():
-    print(f"{i} - {fit[0]} - {'{:.4f}'.format(fit[1])}")
-    i += 1
+
+# Support Vector Regression
+def support_vector_accuracy(X, y, random_state=random.randint(1, 100)):
+    y_reshaped = y.reshape(len(y), 1)
+    X_train, X_test, y_train, y_test = train_test_split(X, y_reshaped, test_size=0.2, random_state=random_state)
+
+    sc_X = StandardScaler()
+    sc_y = StandardScaler()
+    X_train = sc_X.fit_transform(X_train)
+    y_train = sc_y.fit_transform(y_train)
+
+    svr_regressor = SVR(kernel="rbf")
+    svr_regressor.fit(X_train, y_train)
+
+    y_pred = sc_y.inverse_transform(svr_regressor.predict(sc_X.transform(X_test)).reshape(-1, 1))
+
+    return r2_score(y_test, y_pred)
+
+def find_best_fit(X, y, n_tests=1, random_state=random.randint(1, 100)):
+    model_fits = {"Linear Regression": [],
+                  "Polynomial Regression": [],
+                  "Decision Tree Regression": [],
+                  "Random Forest Regression": [],
+                  "Support Vector Regression": []}
+    for _ in range(n_tests):
+        RANDOM = random.randint(1, 100)
+        model_fits["Linear Regression"].append(linear_regression_accuracy(X, y, RANDOM))
+        model_fits["Polynomial Regression"].append(polynomial_regression_accuracy(X, y, RANDOM))
+        model_fits["Decision Tree Regression"].append(decision_tree_regression_accuracy(X, y, RANDOM))
+        model_fits["Random Forest Regression"].append(random_forest_regression_accuracy(X,y, RANDOM))
+        model_fits["Support Vector Regression"].append(support_vector_accuracy(X, y, RANDOM))
+
+
+    model_fits = dict(sorted(model_fits.items(), key=lambda item: sum(item[1])/len(item[1]), reverse=True))
+
+    i = 1
+    for fit in model_fits.items():
+        print(f"{i} - {fit[0]} - {'{:.4f}'.format(sum(fit[1])/len(fit[1]))}")
+        i += 1
+
+
+if __name__ == "__main__":
+    print(find_best_fit(X, y, n_tests=N_TESTS))
