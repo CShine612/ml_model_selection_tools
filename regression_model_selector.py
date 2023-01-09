@@ -10,7 +10,7 @@ from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 
 DATA = "Regression_Data.csv"
-N_TESTS = 5
+N_TESTS = 2
 
 dataframe = pd.read_csv(DATA)
 X = dataframe.iloc[:, :-1].values
@@ -84,28 +84,32 @@ def support_vector_accuracy(X, y, random_state=random.randint(1, 100)):
 
     return r2_score(y_test, y_pred)
 
-def find_best_fit(X, y, n_tests=1, random_state=random.randint(1, 100)):
+
+def find_best_fit(X, y, n_tests=1):
     model_fits = {"Linear Regression": [],
                   "Polynomial Regression": [],
                   "Decision Tree Regression": [],
                   "Random Forest Regression": [],
                   "Support Vector Regression": []}
     for _ in range(n_tests):
-        RANDOM = random.randint(1, 100)
-        model_fits["Linear Regression"].append(linear_regression_accuracy(X, y, RANDOM))
-        model_fits["Polynomial Regression"].append(polynomial_regression_accuracy(X, y, RANDOM))
-        model_fits["Decision Tree Regression"].append(decision_tree_regression_accuracy(X, y, RANDOM))
-        model_fits["Random Forest Regression"].append(random_forest_regression_accuracy(X,y, RANDOM))
-        model_fits["Support Vector Regression"].append(support_vector_accuracy(X, y, RANDOM))
+        random = random.randint(1, 100)
+        model_fits["Linear Regression"].append(linear_regression_accuracy(X, y, random))
+        model_fits["Polynomial Regression"].append(polynomial_regression_accuracy(X, y, random))
+        model_fits["Decision Tree Regression"].append(decision_tree_regression_accuracy(X, y, random))
+        model_fits["Random Forest Regression"].append(random_forest_regression_accuracy(X, y, random))
+        model_fits["Support Vector Regression"].append(support_vector_accuracy(X, y, random))
 
-
-    model_fits = dict(sorted(model_fits.items(), key=lambda item: sum(item[1])/len(item[1]), reverse=True))
+    model_fits = dict(sorted(model_fits.items(), key=lambda item: sum(item[1]) / len(item[1]), reverse=True))
 
     i = 1
+    fit_info = []
     for fit in model_fits.items():
-        print(f"{i} - {fit[0]} - {'{:.4f}'.format(sum(fit[1])/len(fit[1]))}")
+        fit_info.append(f"{i} - {fit[0]} - {'{:.4f}'.format(sum(fit[1]) / len(fit[1]))}")
         i += 1
+
+    return fit_info
 
 
 if __name__ == "__main__":
-    print(find_best_fit(X, y, n_tests=N_TESTS))
+    for fit in find_best_fit(X, y, n_tests=N_TESTS):
+        print(fit)
